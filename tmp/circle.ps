@@ -1,0 +1,22 @@
+%!PS-Adobe-3.0
+%%Title: circle -- black-stroked circle centered on a letter page
+%%BoundingBox: 0 0 612 792
+%%Pages: 1
+%%EndComments
+
+%%Page: 1 1
+<< /PageSize [612 792] >> setpagedevice
+
+/pagew 612 def       % letter width, points
+/pageh 792 def       % letter height, points
+/r 100 def           % circle radius, points
+
+newpath
+pagew 2 div pageh 2 div r 0 360 arc
+closepath
+0 setgray
+2 setlinewidth
+stroke
+
+showpage
+%%EOF

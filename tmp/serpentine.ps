@@ -1,0 +1,23 @@
+/serpentine {
+    5 dict begin
+        /length exch def
+        /width exch def
+        /numarcs exch def
+
+        /L length numarcs div def
+        /W width 2 div def
+
+        /r L dup mul 4 div W dup mul add W 2 mul div def
+
+        r W sub
+        L
+        r
+        0
+        360
+        arc
+    end
+} bind def
+
+
+/NumArcs 3 def       
+/Margin 72 def       % 1in margin
