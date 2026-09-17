@@ -99,14 +99,6 @@ async function connect() {
   void pump(pending);
 }
 
-/* The pad polls at frame rate, so anything it drives will send far too often
-   to log every instruction — those go out quiet, as on the paint canvas. */
-export function send(data: string, quiet = false) {
-  if (!connection) return;
-  connection.write(data);
-  if (!quiet) write("sent", `> ${data}`);
-}
-
 connectButton.addEventListener("click", () => {
   if (connection) {
     /* The socket stays open until the peer answers the close frame, so hold a

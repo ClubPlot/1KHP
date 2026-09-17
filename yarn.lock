@@ -5,6 +5,16 @@ __metadata:
   version: 10
   cacheKey: 10c0
 
+"1khp@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "1khp@workspace:."
+  dependencies:
+    rhino3dm: "npm:^8.32.2"
+    typescript: "npm:~6.0.2"
+    vite: "npm:^8.2.2"
+  languageName: unknown
+  linkType: soft
+
 "@isaacs/fs-minipass@npm:^4.0.0":
   version: 4.0.1
   resolution: "@isaacs/fs-minipass@npm:4.0.1"
@@ -205,16 +215,6 @@ __metadata:
   checksum: 10c0/386d011a553e02bc594ac2ca0bd6d9e4c22d7fa8cfbfc448a6d148c59ea881b092db9dbe3547ae4b88e55f1b01f7c4a2ecc53b310c042793e63aa44cf6c257f2
   languageName: node
   linkType: hard
-
-"interplot@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "interplot@workspace:."
-  dependencies:
-    rhino3dm: "npm:^8.32.2"
-    typescript: "npm:~6.0.2"
-    vite: "npm:^8.2.2"
-  languageName: unknown
-  linkType: soft
 
 "isexe@npm:^4.0.0":
   version: 4.0.0

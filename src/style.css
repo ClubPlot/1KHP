@@ -1,8 +1,7 @@
 /* --- Page chrome ----------------------------------------------------------
    The console around the plotter: a late-80s CRT workstation. The bevels are
-   the same four-inset-shadow trick the Paint window uses further down — outer
-   black, inner light, inner shadow, outer highlight — but struck in violet
-   rather than grey, so the two read as the same machine from different eras.
+   the usual four inset shadows — outer black, inner light, inner shadow, outer
+   highlight — but struck in violet rather than grey.
 
    This commits to one dark palette rather than following the system's light
    and dark: the aesthetic is a lit phosphor screen, and there is no honest
@@ -33,7 +32,6 @@
   --err: #ff3b6b;
 
   --sans: ui-monospace, Consolas, 'Courier New', monospace;
-  --heading: ui-monospace, Consolas, 'Courier New', monospace;
   --mono: ui-monospace, Consolas, 'Courier New', monospace;
 
   /* Raised and sunken, so panels stay consistent everywhere they appear. */
@@ -64,7 +62,7 @@ body {
   position: relative;
   min-height: 100svh;
   /* No background here: the ground is painted by :root, and a background on
-     body would cover the grid, which sits at z-index -1 so the Paint window
+     body would cover the grid, which sits at z-index -1 so the panels above it
      can be lifted clear of the scanline overlay. */
 }
 
@@ -133,28 +131,13 @@ body::after {
   filter: drop-shadow(0 0 7px rgba(255, 47, 185, 0.65));
 }
 
-h1 {
-  font-family: var(--heading);
-  font-weight: 700;
-  font-size: 21px;
-  text-transform: uppercase;
-  letter-spacing: 3px;
-  color: var(--text-h);
-  margin: 0;
-  /* Chromatic fringing, as a tired CRT gun would give it. */
-  text-shadow:
-    1.5px 0 rgba(255, 47, 185, 0.75), -1.5px 0 rgba(35, 229, 229, 0.75),
-    0 0 18px rgba(255, 47, 185, 0.35);
-}
-
 header {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.row,
-#command-form {
+.row {
   display: flex;
   gap: 8px;
   align-items: center;
@@ -210,7 +193,7 @@ button {
     color: var(--accent-2);
     text-shadow: 0 0 10px rgba(35, 229, 229, 0.7);
   }
-  /* Pressed reads as the bevel inverting, the way the Paint buttons do. */
+  /* Pressed reads as the bevel inverting. */
   &:active:not(:disabled) {
     box-shadow: var(--sunken);
     padding: 11px 15px 9px 17px;
@@ -256,8 +239,8 @@ button {
   color: var(--text);
 }
 
-/* The live gamepad dump on the gamepad page: same well as the log, but sized
-   by its contents rather than filling what is left of the page. */
+/* The live gamepad dump: same well as the log, but sized by its contents
+   rather than filling what is left of the page. */
 #state {
   margin: 0;
   padding: 12px;
@@ -375,366 +358,5 @@ button {
   .error {
     color: var(--err);
     text-shadow: 0 0 8px rgba(255, 59, 107, 0.5);
-  }
-}
-
-/* --- Paint ---------------------------------------------------------------
-   A fixed Windows 95 palette: this window is a machine console, so it stays
-   grey whatever the page's colour scheme is doing. Raised and sunken edges are
-   the usual four inset shadows — outer highlight, inner light, inner shadow,
-   outer black. */
-
-.paint {
-  --face: #c0c0c0;
-  --hilite: #ffffff;
-  --light: #dfdfdf;
-  --shadow: #808080;
-  --dark: #000000;
-
-  position: relative;
-  z-index: 4;
-  width: max-content;
-  max-width: 100%;
-  padding: 3px;
-  background: var(--face);
-  color: #000;
-  font: 11px/1.4 Tahoma, 'MS Sans Serif', Geneva, Verdana, sans-serif;
-  letter-spacing: normal;
-  user-select: none;
-  box-shadow:
-    inset -1px -1px var(--dark), inset 1px 1px var(--hilite),
-    inset -2px -2px var(--shadow), inset 2px 2px var(--light);
-
-  svg {
-    width: 16px;
-    height: 16px;
-    display: block;
-    stroke-width: 1;
-  }
-
-  button {
-    font: inherit;
-    color: inherit;
-    background: var(--face);
-    border: none;
-    border-radius: 0;
-    padding: 0;
-    transition: none;
-    cursor: default;
-    /* The page's buttons are bevelled by default now; this window draws its
-       own bevels per control, so it starts flat. */
-    box-shadow: none;
-    text-shadow: none;
-    text-transform: none;
-    letter-spacing: normal;
-
-    /* The page's buttons light up and sink on press. These do not: each
-       control here draws its own state, and the page rules outrank a plain
-       `.paint button` on specificity, so they are turned back off by hand. */
-    &:hover,
-    &:active {
-      color: inherit;
-      padding: 0;
-      box-shadow: none;
-      text-shadow: none;
-    }
-
-    &:focus-visible {
-      outline: 1px dotted var(--dark);
-      outline-offset: -4px;
-    }
-    &:disabled {
-      opacity: 1;
-      cursor: default;
-    }
-  }
-
-  &.collapsed > *:not(.titlebar) {
-    display: none;
-  }
-  &.collapsed .titlebar {
-    cursor: pointer;
-  }
-}
-
-.paint .titlebar {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  height: 18px;
-  padding: 0 2px 0 3px;
-  background: linear-gradient(90deg, #000080, #1084d0);
-  color: #fff;
-  font-weight: bold;
-
-  .title-icon {
-    color: #fff;
-  }
-  .title-icon svg {
-    width: 13px;
-    height: 13px;
-  }
-  .title-text {
-    flex: 1 1 auto;
-  }
-  .title-buttons {
-    display: flex;
-    gap: 2px;
-  }
-  button {
-    width: 16px;
-    height: 14px;
-    display: grid;
-    place-items: center;
-    box-shadow:
-      inset -1px -1px var(--dark), inset 1px 1px var(--hilite),
-      inset -2px -2px var(--shadow), inset 2px 2px var(--light);
-  }
-  button i {
-    font: 9px/1 Tahoma, sans-serif;
-    font-style: normal;
-    /* The glyphs sit high in the box in the original. */
-    transform: translateY(-1px);
-  }
-  button:active {
-    box-shadow: inset 1px 1px var(--shadow), inset -1px -1px var(--light);
-  }
-}
-
-.paint .menubar {
-  display: flex;
-  padding: 1px 0 2px;
-
-  .menu {
-    position: relative;
-  }
-  .menu-title {
-    padding: 2px 7px;
-  }
-  .menu-title:hover,
-  .menu-title.open {
-    background: #000080;
-    color: #fff;
-  }
-}
-
-.paint .dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  z-index: 2;
-  min-width: 168px;
-  padding: 2px;
-  background: var(--face);
-  box-shadow:
-    inset -1px -1px var(--dark), inset 1px 1px var(--hilite),
-    inset -2px -2px var(--shadow), inset 2px 2px var(--light);
-
-  hr {
-    border: none;
-    border-top: 1px solid var(--shadow);
-    border-bottom: 1px solid var(--hilite);
-    margin: 3px 1px;
-  }
-}
-
-.paint .menu-item {
-  display: flex;
-  justify-content: space-between;
-  gap: 24px;
-  width: 100%;
-  padding: 3px 6px 3px 20px;
-  text-align: left;
-  white-space: nowrap;
-
-  .accel {
-    color: inherit;
-  }
-  &:disabled {
-    /* The engraved look Windows used for unavailable commands. */
-    color: var(--shadow);
-    text-shadow: 1px 1px var(--hilite);
-  }
-  &:hover:not(:disabled) {
-    background: #000080;
-    color: #fff;
-  }
-}
-
-.paint .workspace {
-  display: flex;
-  gap: 3px;
-}
-
-.paint .toolbox {
-  width: 50px;
-
-  .tools {
-    display: grid;
-    grid-template-columns: repeat(2, 25px);
-  }
-  .tool {
-    width: 25px;
-    height: 24px;
-    display: grid;
-    place-items: center;
-    box-shadow:
-      inset -1px -1px var(--dark), inset 1px 1px var(--hilite),
-      inset -2px -2px var(--shadow), inset 2px 2px var(--light);
-  }
-  .tool:disabled {
-    color: var(--shadow);
-  }
-  .tool.active {
-    box-shadow: inset 1px 1px var(--shadow), inset -1px -1px var(--light);
-    background:
-      repeating-conic-gradient(#d8d8d8 0% 25%, var(--face) 0% 50%) 0 0 / 4px 4px;
-  }
-  .tool.active svg {
-    transform: translate(1px, 1px);
-  }
-  .tool-options {
-    margin-top: 3px;
-    height: 72px;
-    box-sizing: border-box;
-    padding: 3px;
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-    box-shadow: inset 1px 1px var(--shadow), inset -1px -1px var(--hilite);
-  }
-  /* The text tool's sizes, each shown at the size it draws. */
-  .text-size {
-    flex: 1 1 0;
-    display: grid;
-    place-items: center;
-    font-family: 'Courier New', monospace;
-    line-height: 1;
-  }
-  .text-size.active {
-    background: #000080;
-    color: #fff;
-  }
-  /* Live typing is a mode, so it latches like a toolbox button rather than
-     acting on a click. */
-  .live-toggle {
-    flex: 0 0 auto;
-    margin-top: 2px;
-    box-shadow:
-      inset -1px -1px var(--dark), inset 1px 1px var(--hilite),
-      inset -2px -2px var(--shadow), inset 2px 2px var(--light);
-  }
-  .live-toggle.active {
-    box-shadow: inset 1px 1px var(--shadow), inset -1px -1px var(--light);
-    background:
-      repeating-conic-gradient(#d8d8d8 0% 25%, var(--face) 0% 50%) 0 0 / 4px 4px;
-  }
-}
-
-.paint .canvas-well {
-  position: relative;
-  padding: 2px;
-  box-shadow:
-    inset 1px 1px var(--shadow), inset -1px -1px var(--hilite),
-    inset 2px 2px var(--dark), inset -2px -2px var(--light);
-
-  canvas {
-    display: block;
-    background: #fff;
-    cursor: crosshair;
-    /* Otherwise a trackpad or touch drag scrolls the page instead of drawing. */
-    touch-action: none;
-  }
-  canvas.typing {
-    cursor: text;
-  }
-}
-
-/* The label being typed: a plain textarea over the canvas, holding no styling
-   of its own beyond the dashed box — font, colour, and position are set from
-   the plotter's cell geometry as you type. */
-.paint .text-entry {
-  position: absolute;
-  margin: 0;
-  padding: 0;
-  border: none;
-  background: transparent;
-  overflow: hidden;
-  resize: none;
-  white-space: pre;
-  user-select: text;
-  outline: 1px dashed var(--dark);
-  outline-offset: 1px;
-}
-
-.paint .palette {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 1px 3px;
-
-  .current {
-    position: relative;
-    width: 31px;
-    height: 30px;
-  }
-  .swatch-fg,
-  .swatch-bg {
-    position: absolute;
-    width: 16px;
-    height: 14px;
-    box-shadow: inset 1px 1px var(--shadow), inset -1px -1px var(--hilite);
-  }
-  .swatch-fg {
-    top: 1px;
-    left: 1px;
-    z-index: 1;
-    background: var(--ink, #000);
-  }
-  .swatch-bg {
-    top: 12px;
-    left: 12px;
-    background: #fff;
-  }
-
-  .swatches {
-    display: grid;
-    grid-template-columns: repeat(4, 17px);
-    grid-auto-rows: 15px;
-    gap: 1px;
-  }
-  .swatch {
-    background: var(--ink);
-    box-shadow: inset 1px 1px var(--shadow), inset -1px -1px var(--hilite);
-  }
-  .swatch.active {
-    box-shadow:
-      inset 1px 1px var(--shadow), inset -1px -1px var(--hilite),
-      0 0 0 1px var(--dark);
-  }
-  .palette-note {
-    color: #404040;
-  }
-}
-
-.paint .statusbar {
-  display: flex;
-  gap: 2px;
-
-  .pane {
-    padding: 2px 5px;
-    box-shadow: inset 1px 1px var(--shadow), inset -1px -1px var(--hilite);
-  }
-  .hint {
-    flex: 1 1 auto;
-  }
-  .coords {
-    width: 62px;
-  }
-  .plu {
-    width: 86px;
-  }
-  .pen {
-    width: 104px;
   }
 }

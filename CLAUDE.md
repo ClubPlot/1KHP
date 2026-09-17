@@ -7,18 +7,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 `interplot` is a browser app that drives a vintage **HP-GL pen plotter** (HP 7475A / 7550
 class) live over a WebSocket bridge. There is no backend in this repo — the app talks to a
 socket-to-serial bridge on the plotter host (`DEFAULT_URL` points at a Tailscale address,
-`ws://plotpi…:8181`). Two independent front-ends share the protocol layer:
+`ws://plotpi…:8181`). There is one front-end:
 
-- **`index.html` → `src/main.ts`** — a Microsoft Paint-style drawing surface that emits HP-GL.
-- **`gamepad.html` → `src/gamepad.ts`** — drive the pen directly with a game controller.
+- **`index.html` → `src/gamepad.ts`** — the 1000 HP racing game: drive the pen around a track
+  with a game controller, against the clock.
 
-The `track/` directory is a separate concern: a Rhino model and tooling for a race-track game
-(see the last section).
+The `track/` directory holds the game's course: a Rhino model and the tooling that turns it
+into hit regions and HP-GL (see the last section).
 
 ## Commands
 
 ```sh
-yarn dev              # Vite dev server (both pages)
+yarn dev              # Vite dev server
 yarn build            # tsc type-check (noEmit) + vite build — this is also the "lint"
 yarn preview          # serve the production build
 
@@ -38,50 +38,51 @@ runtime test is `track/test-hit-regions.mjs`, wired up as `yarn test`.
 
 ## Architecture
 
-Vite is configured for a **multi-page build** (`vite.config.ts` lists `index.html` and
-`gamepad.html` as separate inputs). The two pages do not share state — only the modules below.
+A single-page Vite build: `index.html` is the only entry, so `vite.config.ts` carries nothing
+but `base`.
 
-### `src/plot.ts` — the protocol + transport layer (start here)
+### `src/plot.ts` — the transport layer (start here)
 
-Everything device-specific lives here and is imported by both front-ends:
+Small: the socket and the units, nothing else. There is no HP-GL command-builder layer —
+`gamepad.ts` writes its instructions as strings.
 
-- **`HPGL`** and **`DSC`** — command builders. `HPGL` is plain HP-GL (`PU`/`PD`/`PA`/`SP`/`LB`…,
-  each terminated with `;`); `DSC` is the ESC-prefixed device-control set. Labels (`LB`) read
-  raw bytes until an ETX terminator, so control characters are stripped before sending.
-- **Unit system** — the plot area is `PLOT_WIDTH × PLOT_HEIGHT` = `10000 × 7500` plotter units
-  (1 unit = 0.025 mm, so `PLOTTER_UNITS_PER_CM = 400`); a 4:3 area. **HP-GL's origin is
-  lower-left**, not top-left — coordinate conversions must account for this.
-- **`PENS` / `DEFAULT_PEN`** — the physical pen carousel. `DEFAULT_PEN = 3` is an index into
-  `PENS`, one less than its `SP` number (slots 1–3 are out of service on the machine, so
-  drawing starts on `SP4;`).
 - **`createConnection(url)`** returns a `Connection`: a thin WebSocket wrapper exposing
   `ready()` / `read()` / `write()` / `close()`. Incoming messages are buffered through a
   `ReadableStream`; consumers `pump()` it in a loop until close.
+- **`Point`** is in HP-GL plotter units of 0.025 mm. **HP-GL's origin is lower-left**, not
+  top-left — coordinate conversions must account for this.
+- **`DEFAULT_URL`** is the bridge on the plotter host.
 
-### `src/paint.ts` — the drawing UI (large, self-contained)
+Instructions go out as literal HP-GL: `;`-terminated, `PU`/`PD`/`PA`/`PR` to move, `SP` to
+choose a pen, `VS` for speed, and `LB…\x03` for a label (which reads raw bytes until that ETX
+terminator, so ETX is the one byte a label cannot contain). Slots 1–3 of the carousel are out
+of service on the machine, so drawing starts at `SP4;`.
 
-An MS-Paint clone on a fixed **640 × 480** canvas (same 4:3 shape as the plot area).
-Key ideas that span the file:
+### `src/gamepad.ts` — the game (connection UI, race loop, HUD)
 
-- **Coordinate flow**: everything is kept in canvas pixels and converted to plotter units only
-  on the way out (`CM_PER_PIXEL`). The plotter's ~1 KB input buffer means polylines are chunked
-  into short instructions (`MAX_PAIRS_PER_MESSAGE`), and freehand samples closer than
-  `MIN_SEND_DISTANCE` are dropped.
-- **Tools**: the 16-tool toolbox mirrors real MS Paint, but only tools with an honest HP-GL
-  equivalent (pencil, line, rect, ellipse, text) actually plot; the rest are drawn but inert,
-  each with a `why` explaining what the plotter cannot reproduce.
-- **Text** mirrors the plotter's stick-font geometry (fixed-pitch, `SI` sizes in cm, 1.5× char
-  advance, 2× line advance) so the on-screen box stands where the ink will land.
-- Mounted via `mountPaint(host, port)` where `port` supplies `send`/`note`/`isLive` from
-  `main.ts`; the `quiet` flag on `send` keeps per-frame freehand batches out of the log.
+The whole front-end: the connect bar and log, the Draw Track and Start Race buttons, and the
+race loop. Notable:
 
-### `src/gamepad.ts` — controller-driven plotting
+- **The race loop** polls the Gamepad API through `requestAnimationFrame` but only acts every
+  `minInterval` (100 ms), so the plotter's ~1 KB input buffer is not flooded. Stick deflection
+  becomes a relative pen move (`PR`) and the right trigger sets the speed (`VS`).
+- **Hit testing** asks `src/track.ts` where the next point lands: on track it moves, over the
+  finish line it banks a lap time and restarts on the next pen, and off track it refuses the
+  move and rumbles the pad instead. The pen never leaves the course.
+- **`gameState` / `lapTimes`** are module-level and drive `renderHud()`; after `LAPS` laps the
+  loop labels the lap times onto the sheet with `LB`.
+- **The countdown** plays `src/assets/countdown.mp4` over the camera feed, green-keyed frame by
+  frame onto `#countdown` (`keyFrame`), and resolves as the flag drops.
+- The camera itself is an `<iframe>` in `index.html`, not something this module touches.
 
-Polls the Gamepad API at frame rate (`requestAnimationFrame`) and turns stick input into
-relative pen moves (`PR`). Notable: velocity magnitude maps to plotter speed (`VS`, capped at
-`MAX_SPEED_CM_S = 38.1` for a 7475A), a `DEADZONE` guards against divide-by-zero on a centred
-stick, and `plotToEnd` does a slab/ray-clip against the plotter window bounds (`OW`) so a move
-stops at the paper edge. This file is the most experimental / in-flux part of the codebase.
+This file is the most experimental / in-flux part of the codebase.
+
+### `src/track.ts` — hit testing against the extracted regions
+
+Imports `track/hit-regions.json` and exposes `startPoint()` / `onTrack()` / `starting()` /
+`finished()`, splitting the regions by `group`. Same geometry as the test script below —
+convex-quad side test for rectangles, radius-plus-CCW-sweep for wedge bands, one plotter unit
+of tolerance.
 
 ## Track / Rhino hit regions (`track/`)
 
@@ -115,7 +116,7 @@ its own `startPoint` field rather than as a region.
 everything on the way out: 1016 plotter units to the inch, then a 90° CCW rotation (what HP-GL's
 own `RO90` does) to reach the plotter's landscape orientation, then a translation centring the
 sheet on the Letter hard-clip limits of `10300 × 7650` plotter units. Note that is the real
-Letter plotting range, *not* the 4:3 `PLOT_WIDTH × PLOT_HEIGHT` the paint page draws inside.
+Letter plotting range.
 The sheet is bigger than the range, so its corners fall outside; every hit region lands inside
 with ~260 units to spare. `toPlotter` / `toPlotterLength` and the limits are exported so
 anything else in the pipeline converts the same way.
@@ -149,6 +150,9 @@ anything else in the pipeline converts the same way.
   rounds to whole units.
   Sanity check: at `--points=400000` the measured group shares match the regions' analytic areas
   (TRACK 33.07% vs 33.04%, START/FINISH ~0.99% vs 1.003%).
+
+`track/trackhpgl.ts` is the generated companion to all this: one long `trackHPGL` string that
+draws the course, exported for the Draw Track button. It is output, not something to hand-edit.
 
 `track/pdf2hpgl.sh` is an unrelated utility that converts PDF/PS/EPS linework to HP-GL
 (ghostscript → pstoedit → affine fit/rotate/pen transform).

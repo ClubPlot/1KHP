@@ -15,7 +15,7 @@
 ### Plot.recurse website updates
 
 - [ ] Get game working on website
-- [ ] Edit HTML file naming
+- [x] Edit HTML file naming — the game is now `index.html`; the paint app is gone
 - [ ] Work to have camera be publicly accessible so that users can play without Tailscale access
 
 
