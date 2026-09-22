@@ -3,7 +3,9 @@
 Drive a vintage HP-GL pen plotter around a race track with a game controller.
 
 `1KHP` is a browser app that steers an **HP 7475A / 7550**-class plotter live over a WebSocket bridge. 
+
 The pen acts as the car: push the stick and it draws its own line around the course, squeeze the right trigger to go faster.
+
 Hit detection is set up such that if you try to leave the track the move is refused and the controller rumbles — the pen never runs off the paper.
 Once you hit the end of the track the pen switches and resets the lap. 4 Laps in total
 Upon completion your times will also be drawn on the page
