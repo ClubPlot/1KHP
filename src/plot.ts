@@ -2,7 +2,7 @@
    corner of the sheet, not the upper-left. */
 export type Point = { x: number, y: number };
 
-export const DEFAULT_URL = "ws://plotpi.cymric-logarithm.ts.net:8181";
+export const DEFAULT_URL = "wss://plotpi.cymric-logarithm.ts.net:8443/";
 
 export type Connection = ReturnType<typeof createConnection>;
 
